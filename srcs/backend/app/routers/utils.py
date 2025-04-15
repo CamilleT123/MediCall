@@ -344,6 +344,7 @@ def get_all_measurements(landmarks: np.ndarray) -> Dict[str, float]:
       'right_knee_ankle_alignment': check_knee_ankle_alignment(landmarks, 'right'),
       'left_knee_ankle_alignment': check_knee_ankle_alignment(landmarks, 'left'),
       'back_arch': check_back_arch(landmarks),
+      'back_angle':check_back_angle(landmarks),
       'tailbone_tilt': check_tailbone_tilt(landmarks),
 
       'hip_square': check_hip_square(landmarks),
