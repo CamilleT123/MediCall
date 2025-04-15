@@ -1,0 +1,98 @@
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    restart: always
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    networks:
+      - app-network
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=mydb
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_HOST_AUTH_METHOD=password
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U myuser"]
+    #   interval: 5s
+    #   retries: 10
+
+  # fastapi:
+  #   build: ./backend
+  #   container_name: backend
+  #   restart: always
+  #   ports:
+  #     - "8000:8000"
+  #   expose:
+  #     - "8000"
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - postgres
+  #   volumes:
+  #     - ./backend/app:/app/
+  #     - /run/user/1000/pulse:/run/user/1000/pulse
+  #     - ~/.config/pulse/cookie:/root/.config/pulse/cookie
+  #     - /etc/pulse:/etc/pulse
+  #     - /run/dbus:/run/dbus
+  #     - /dev/shm:/dev/shm
+  #     - /etc/machine-id:/etc/machine-id:ro
+  #     - /tmp/.X11-unix:/tmp/.X11-unix  # ✅ Partage l'affichage X11 pour les apps GUI (si besoin)
+  #   environment:
+  #     - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/mydb
+  #     - DISPLAY=${DISPLAY}  # ✅ Permet aux applications GUI de s’afficher (si utilisé)
+  #     - PULSE_SERVER=unix:/run/user/1000/pulse/native
+  #     - PULSE_COOKIE=/root/.config/pulse/cookie
+  #   networks:
+  #     - app-network
+  #   privileged: true
+  #   group_add:
+  #     - audio  # ✅ Ajoute l'utilisateur Docker au groupe audio
+  #     - video  # ✅ Ajoute l'utilisateur Docker au groupe vidéo
+  #   devices:
+  #     - /dev/snd:/dev/snd  # ✅ Donne accès aux périphériques audio
+  #     - /dev/video0:/dev/video0  # ✅ Accès à la webcam principale
+  #     - /dev/video1:/dev/video1  # ✅ (Optionnel) Deuxième webcam si nécessaire
+
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules 
+    ports:
+      - "3000:80"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=http://localhost:8000
+    # depends_on:
+    #   - fastapi 
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    restart: always
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+    #   - fastapi
+      - frontend
+    networks:
+      - app-network
+    volumes:
+      - ./frontend/build:/usr/share/nginx/html
