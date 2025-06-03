@@ -324,7 +324,7 @@ def calculate_height_of_feet_right(landmarks: np.ndarray) -> float:
     # Return the average height of both feet
     return right_foot_height
   
-  
+
 def calculate_height_of_feet_left(landmarks: np.ndarray) -> float:
     """Calculate the height of the feet relative to the ground"""
     left_ankle = landmarks[mp.solutions.pose.PoseLandmark.LEFT_ANKLE.value]
